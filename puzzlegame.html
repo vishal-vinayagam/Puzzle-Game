@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slide Puzzle</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            text-align: center;
+            color: #0c67ae;
+        }
+
+        #title {
+            height: 150px;
+            width: 400px;
+            margin-bottom: 20px;
+        }
+
+        #board {
+            width: 360px; /* 3 tiles * 120px each */
+            height: 360px; /* 3 tiles * 120px each */
+            background-color: lightblue;
+            border: 10px solid #0c67ae;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        #board img {
+            width: 120px; /* Each image is 1/3rd of the container */
+            height: 120px;
+            border: 1px solid #0c67ae;
+            cursor: pointer;
+            box-sizing: border-box; /* Ensures border is included in the width and height */
+        }
+
+        #controls {
+            margin-top: 20px;
+        }
+
+        #victory {
+            display: none;
+            color: green;
+            font-size: 1.5em;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <img id="title" src="./logo.png">
+    <div id="board"></div>
+    <h1>Turns: <span id="turns">0</span></h1>
+    <h1>Time: <span id="time">0</span> seconds</h1>
+    <div id="victory">Congratulations! You solved the puzzle!</div>
+    <div id="controls">
+        <button onclick="resetGame()">Reset Game</button>
+    </div>
+
+    <script>
+        let rows = 3;
+        let columns = 3;
+
+        let currTile;
+        let otherTile;
+
+        let turns = 0;
+        let time = 0;
+        let timerInterval;
+
+        const imgOrder = ["do1", "do 2", "do 3", "do 4", "do 5", "do 6", "do 7", "do 8", "do 9"];
+        const correctOrder = [...imgOrder]; // Keeping a reference to the correct order
+
+        window.onload = function() {
+            shuffleArray(imgOrder);
+            createBoard();
+            startTimer();
+        }
+
+        function createBoard() {
+            const board = document.getElementById("board");
+            board.innerHTML = '';
+            imgOrder.forEach((img, i) => {
+                let tile = document.createElement("img");
+                tile.id = Math.floor(i / columns) + "-" + (i % columns);
+                tile.src = img + ".jpg";
+                tile.addEventListener("click", tileClick);
+                board.appendChild(tile);
+            });
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function tileClick() {
+            currTile = this;
+            otherTile = findEmptyTile();
+            if (canSwap(currTile, otherTile)) {
+                swapTiles(currTile, otherTile);
+                turns += 1;
+                document.getElementById("turns").innerText = turns;
+                checkVictory();
+            }
+        }
+
+        function findEmptyTile() {
+            return Array.from(document.querySelectorAll("#board img")).find(tile => tile.src.includes("do 9.jpg"));
+        }
+
+        function canSwap(tile1, tile2) {
+            let currCoords = tile1.id.split("-");
+            let r = parseInt(currCoords[0]);
+            let c = parseInt(currCoords[1]);
+
+            let otherCoords = tile2.id.split("-");
+            let r2 = parseInt(otherCoords[0]);
+            let c2 = parseInt(otherCoords[1]);
+
+            let moveLeft = r == r2 && c2 == c - 1;
+            let moveRight = r == r2 && c2 == c + 1;
+            let moveUp = c == c2 && r2 == r - 1;
+            let moveDown = c == c2 && r2 == r + 1;
+
+            return moveLeft || moveRight || moveUp || moveDown;
+        }
+
+        function swapTiles(tile1, tile2) {
+            [tile1.src, tile2.src] = [tile2.src, tile1.src];
+        }
+
+        function checkVictory() {
+            const currentOrder = Array.from(document.querySelectorAll("#board img")).map(img => img.src.split("/").pop().split(".")[0]);
+            if (JSON.stringify(currentOrder) === JSON.stringify(correctOrder)) {
+                clearInterval(timerInterval);
+                document.getElementById("victory").style.display = "block";
+            }
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                time += 1;
+                document.getElementById("time").innerText = time;
+            }, 1000);
+        }
+
+        function resetGame() {
+            shuffleArray(imgOrder);
+            createBoard();
+            turns = 0;
+            time = 0;
+            document.getElementById("turns").innerText = turns;
+            document.getElementById("time").innerText = time;
+            document.getElementById("victory").style.display = "none";
+            clearInterval(timerInterval);
+            startTimer();
+        }
+    </script>
+</body>
+</html>
